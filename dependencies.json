@@ -1,0 +1,22 @@
+{
+    "boost": {
+        "range": "1.x",
+        "current": "1.83.0"
+    },
+    "eigen": {
+        "range": "3.x",
+        "current": "3.4.0"
+    },
+    "nlohmann_json": {
+        "range": "3.x",
+        "current": "3.11.2"
+    },
+    "json-schema-validator": {
+        "range": "2.x",
+        "current": "2.1.0"
+    },
+    "cgal": {
+        "range": "5.x",
+        "current": "5.6"
+    }
+}
