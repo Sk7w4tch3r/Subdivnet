@@ -38,6 +38,8 @@ find_package(CGAL REQUIRED COMPONENTS Core)
 find_package(nlohmann_json REQUIRED)
 find_package(nlohmann_json_schema_validator REQUIRED)
 find_package(Torch REQUIRED)
+find_package(libigl REQUIRED)
+
 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
@@ -45,6 +47,8 @@ find_package(Torch REQUIRED)
 list(APPEND dependencies CGAL::CGAL)
 list(APPEND dependencies nlohmann_json::nlohmann_json)
 list(APPEND dependencies nlohmann_json_schema_validator)
+# use libigl
+list(APPEND dependencies libigl::libigl)
 list(APPEND dependencies "${TORCH_LIBRARIES}")
 
 
@@ -64,10 +68,14 @@ target_link_libraries(subdivnet_lib PRIVATE ${dependencies})
 # ---- Declare executable ----
 
 add_executable(subdivnet_exe source/main.cpp)
+add_executable(train_subdivnet_exe source/train_cls.cpp)
 add_executable(subdivnet::exe ALIAS subdivnet_exe)
 set_property(TARGET subdivnet_exe PROPERTY OUTPUT_NAME subdivnet)
+set_property(TARGET train_subdivnet_exe PROPERTY OUTPUT_NAME train_subdivnet)
 target_compile_features(subdivnet_exe PRIVATE cxx_std_20)
+target_compile_features(train_subdivnet_exe PRIVATE cxx_std_20)
 target_link_libraries(subdivnet_exe PRIVATE subdivnet_lib ${dependencies})
+target_link_libraries(train_subdivnet_exe PRIVATE subdivnet_lib ${dependencies})
 
 # ---- Install rules ----
 
