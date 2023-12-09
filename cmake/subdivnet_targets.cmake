@@ -8,10 +8,9 @@ function (subdivnet_declare_lib)
         subdivnet_lib OBJECT
         "${BASE_DIR}/source/conv.cpp"
         "${BASE_DIR}/source/conv.h"
-        "${BASE_DIR}/source/subdivnet/dataset.cpp"
         "${BASE_DIR}/source/subdivnet/dataset.h"
-        "${BASE_DIR}/source/subdivnet/deeplab.cpp"
-        "${BASE_DIR}/source/subdivnet/deeplab.h"
+        # "${BASE_DIR}/source/subdivnet/deeplab.cpp"
+        # "${BASE_DIR}/source/subdivnet/deeplab.h"
         "${BASE_DIR}/source/subdivnet/mesh_ops.cpp"
         "${BASE_DIR}/source/subdivnet/mesh_ops.h"
         "${BASE_DIR}/source/subdivnet/mesh_tensor.cpp"
@@ -19,7 +18,7 @@ function (subdivnet_declare_lib)
         "${BASE_DIR}/source/subdivnet/network.cpp"
         "${BASE_DIR}/source/subdivnet/network.h"
         "${BASE_DIR}/source/subdivnet/utils.h"
-        "${BASE_DIR}/source/maps/geometry.cpp"
+        # "${BASE_DIR}/source/maps/geometry.cpp"w
         "${BASE_DIR}/source/maps/geometry.h"
         "${BASE_DIR}/source/maps/maps.cpp"
         "${BASE_DIR}/source/maps/maps.h"
@@ -44,8 +43,6 @@ function (subdivnet_declare_exe BASE_DIR)
 
     add_executable(subdivnet_exe
         "${BASE_DIR}source/main.cpp"
-        "${BASE_DIR}source/vis/model.cpp"
-        "${BASE_DIR}source/vis/model.h"
     )
     add_executable(subdivnet::exe ALIAS subdivnet_exe)
     set_property(TARGET subdivnet_exe PROPERTY OUTPUT_NAME subdivnet)
