@@ -14,33 +14,13 @@ std::vector<std::vector<int>> segment_colors = {
     {240, 166, 202}
 };
 
-MeshTensor toMeshTensor(torch::Tensor vertices, torch::Tensor faces, torch::Tensor features) {
-    MeshTensor mesh_tensor;
-    mesh_tensor.vertices = vertices;
-    mesh_tensor.faces = faces;
-    mesh_tensor.features = features;
+MeshTensor toMeshTensor(torch::Tensor faces, torch::Tensor features) {
+    MeshTensor mesh_tensor = MeshTensor(faces, features, std::map<std::string, std::vector<float>>());
     return mesh_tensor;
 }
 
 
-void saveResults(mesh_infos, preds, labels, name){
-    continue;
-}
-
-void updateLabelAccuracy(preds, labels, acc){
-    continue;
-}
-
-std::vector<float> computeOriginalAccuracy(mesh_infos, preds, labels){
-    continue;
-}
-
 class ClassificationMajorityVoting{
 
 };
-
-class SegmentationMajorityVoting{
-
-};
-
 
