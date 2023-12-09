@@ -34,3 +34,4 @@ prod.env
 poetry.lock
 conan.lock
 lab/
+data/
