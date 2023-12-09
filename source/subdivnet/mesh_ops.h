@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include <givde/lib/dggs/multiatlas.h>
 
 #include <torch/torch.h>
 #include <vector>
@@ -11,7 +10,6 @@
 #include "mesh_tensor.h"
 
 
-using Index = givde::multiatlas::Index;
 
 class MeshConv : public torch::nn::Module {
     // inherit the constructor of Module
