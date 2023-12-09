@@ -1,34 +1,40 @@
 #pragma once
 #include <string>
+#include <givde/lib/dggs/multiatlas.h>
 
 #include <torch/torch.h>
 #include <vector>
 
+// #include <iostream>
+#include <cassert>
+
 #include "mesh_tensor.h"
+
+
+using Index = givde::multiatlas::Index;
 
 class MeshConv : public torch::nn::Module {
     // inherit the constructor of Module
     using torch::nn::Module::Module;
     
     public:
-        int in_channels;
-        int out_channels;
-        int kernel_size;
-        int dilation;
-        int stride;
+        int k_in_channels;
+        int k_out_channels;
+        int k_kernel_size;
+        int k_dilation;
+        int k_stride;
 
-        // assert kernel_size % 2 == 1
-        // assert(kernel_size % 2 == 1);
+        torch::nn::Conv1d conv1d = nullptr;
+        torch::nn::Conv2d conv2d = nullptr;
         
-        MeshConv(int in_channels, int out_channels, int kernel_size, int dilation, int stride, bool bias = true){
-            this->in_channels = in_channels;
-            this->out_channels = out_channels;
-            this->kernel_size = kernel_size;
-            this->dilation = dilation;
-            this->stride = stride;
-        }
+        MeshConv(int in_channels, 
+                    int out_channels, 
+                    int kernel_size=3, 
+                    int dilation=1, 
+                    int stride=1, 
+                    bool bias = true);
 
-        MeshTensor execute(MeshTensor meshTensor);
+        MeshTensor forward(MeshTensor meshTensor);
 
 };
 
@@ -38,13 +44,13 @@ class MeshPool : public torch::nn::Module {
     using torch::nn::Module::Module;
     
     public:
-        std::string op;
+        std::string k_op;
 
         MeshPool(std::string op){
-            this->op = op;
+            this->k_op = op;
         }
 
-        MeshTensor execute(MeshTensor meshTensor);
+        MeshTensor forward(MeshTensor meshTensor);
 
 };
 
@@ -53,13 +59,13 @@ class MeshUnpool : public torch::nn::Module {
     using torch::nn::Module::Module;
 
     public:
-        int mode;
+        int k_mode;
 
         MeshUnpool(int mode){
-            this->mode = mode;
+            this->k_mode = mode;
         }
 
-        MeshTensor execute(MeshTensor meshTensor);
+        MeshTensor forward(MeshTensor meshTensor);
 };
 
 
@@ -67,13 +73,13 @@ class MeshAdaptivePool : public torch::nn::Module {
     using torch::nn::Module::Module;
 
     public:
-        std::string mode;
+        std::string k_mode;
 
         MeshAdaptivePool(std::string mode){
-            this->mode = mode;
+            this->k_mode = mode;
         }
 
-        MeshTensor execute(MeshTensor meshTensor);
+        torch::Tensor forward(MeshTensor meshTensor);
 };
 
 
@@ -81,18 +87,21 @@ class MeshBatchNorm : public torch::nn::Module {
     using torch::nn::Module::Module;
 
     private:
-        float eps = 1e-5;
-        float momentum = 0.1;
+        float k_eps = 1e-5;
+        float k_momentum = 0.1;
 
     public:
-        // torch::Tensor bn;
+        torch::nn::BatchNorm2d bn = nullptr;
 
 
         MeshBatchNorm(int num_features){
-            // this->bn = torch::nn::BatchNorm2d(torch::nn::BatchNorm2dOptions(num_features).eps(eps).momentum(momentum));
+            this->bn = torch::nn::BatchNorm2d(torch::nn::BatchNorm2dOptions(num_features).eps(this->k_eps).momentum(this->k_momentum));
         }
 
-        MeshTensor execute(MeshTensor meshTensor);
+        MeshTensor forward(MeshTensor meshTensor){
+            torch::Tensor feats = this->bn->forward(meshTensor.feats);
+            return meshTensor.updated(feats);
+        };
 };
 
 
@@ -100,18 +109,49 @@ class MeshReLU : public torch::nn::Module {
     using torch::nn::Module::Module;
 
     public:
-        // torch::Tensor relu;
+        torch::nn::ReLU relu;
 
         MeshReLU(){
-            // this->relu = torch::nn::ReLU();
+            this->relu = torch::nn::ReLU();
         }
 
-        MeshTensor execute(MeshTensor meshTensor);
+        MeshTensor forward(MeshTensor meshTensor){
+            torch::Tensor feats = this->relu->forward(meshTensor.feats);
+            return meshTensor.updated(feats);
+        }
 };
 
 
-class MeshDropout : public torch::nn::Module {};
+class MeshDropout : public torch::nn::Module {
+    using torch::nn::Module::Module;
+
+    public:
+        torch::nn::Dropout dropout = nullptr;
+
+        MeshDropout(float p){
+            this->dropout = torch::nn::Dropout(torch::nn::DropoutOptions(p));
+        }
+        
+        MeshTensor forward(MeshTensor meshTensor){
+            torch::Tensor feats = this->dropout->forward(meshTensor.feats);
+            return meshTensor.updated(feats);
+        }
+};
 
 
-class MeshLinear : public torch::nn::Module {};
+class MeshLinear : public torch::nn::Module {
+    using torch::nn::Module::Module;
+
+    public:
+        torch::nn::Conv1d conv1d = nullptr;
+
+        MeshLinear(int in_channels, int out_channels, bool bias = true){
+            this->conv1d = torch::nn::Conv1d(torch::nn::Conv1dOptions(in_channels, out_channels, 1).bias(bias));
+        }
+
+        MeshTensor forward(MeshTensor meshTensor){
+            torch::Tensor feats = this->conv1d->forward(meshTensor.feats);
+            return meshTensor.updated(feats);
+        }
+};
 
