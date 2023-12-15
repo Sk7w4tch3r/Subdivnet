@@ -8,94 +8,121 @@
 
 
 std::pair<float, float> train(
-    MeshNet net,
-    ClassificationDataset* train_dataset,
-    int epoch,
-    int num_workers,
-    torch::Device device){
-    
+    MeshNet & net,
+    int const& epoch,
+    int const& num_workers,
+    torch::Device const& device,
+    int const& batch_size = 32){
+
+    auto train_dataset = ClassificationDGGSDataset(
+        "data/MNISTDGGS",
+        batch_size,
+        true,
+        true,
+        true,
+        givde::Resolution(5)
+    ).map(Stack<DGGSExample>());
+
+    // net.ptr()->to(device);
     net->to(device);
 
     net->train();
-    int batch_idx = 0;
-    
-    torch::optim::Adam adamOptim(net->parameters(), torch::optim::AdamOptions(0.001));
 
-    auto train_loader = torch::data::make_data_loader(
-        *train_dataset,
-        torch::data::DataLoaderOptions().batch_size(train_dataset->k_batch_size).workers(num_workers)
-    );
+    int batch_idx = 0;
+
+    torch::optim::Adam adamOptim(net->parameters(), torch::optim::AdamOptions(0.001));
+    auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(train_dataset), torch::data::DataLoaderOptions().workers(num_workers).batch_size(batch_size));
     torch::nn::CrossEntropyLoss cross_entropy = torch::nn::CrossEntropyLoss();
 
-    for (auto& batch : *train_loader){
-        auto data = batch[batch_idx].data;
-        auto target = batch[batch_idx].target;
-        
-        data = data.to(device);
-        target = target.to(device);
 
-        MeshTensor mesh_tensor = toMeshTensor(data[0], data[1]);
+    for (auto& batch : *train_loader){
+        auto faces = batch.faces; // not correct
+        auto features = batch.feats;
+        auto labels = batch.labels;
+        
+        auto data = features.to(device);
+        auto target = labels.to(device);
+
+        MeshTensor mesh_tensor = toMeshTensor(faces, features);
+        std::cout << mesh_tensor.shape() << std::endl;
+
 
         adamOptim.zero_grad();
         auto output = net->forward(mesh_tensor);
+        std::cout << "output sizes " << output.sizes() << std::endl;
         auto loss = cross_entropy(output, target);
         loss.backward();
         adamOptim.step();
+        int dataset_size = *train_dataset.size();
         if (batch_idx % 10 == 0){
-            std::cout << "Train Epoch: " << epoch << " [" << batch_idx * train_dataset->k_batch_size << "/" << *train_dataset->size() << " (" << 100. * batch_idx / train_dataset->k_batch_size << "%)]\tLoss: " << loss.item<float>() << std::endl;
+            std::cout << "Train Epoch: " << epoch << " [" << batch_idx * batch_size << "/" << dataset_size << " (" << 100. * batch_idx / batch_size << "%)]\tLoss: " << 0 << std::endl;
         }
         batch_idx++;
     }
 
-    net->eval();
-    float test_loss = 0.0;
-    int correct = 0;
-    int bna = 0; // batch number accumulator
-    for (auto& batch : *train_loader){
-        auto data = batch[bna].data.to(device);
-        auto target = batch[bna].target.to(device);
+    // net->eval();
+    // float test_loss = 0.0;
+    // int correct = 0;
+    // int bna = 0; // batch number accumulator
+    // for (auto& batch : *train_loader){
+    //     auto data = batch[bna].data.to(device);
+    //     auto target = batch[bna].target.to(device);
 
-        MeshTensor mesh_tensor = toMeshTensor(data[0], data[1]);
+    //     MeshTensor mesh_tensor = toMeshTensor(data[0], data[1]);
 
-        auto output = net->forward(mesh_tensor);
-        test_loss += torch::nll_loss(output, target, {}, torch::Reduction::Sum).item<float>();
-        auto pred = output.argmax(1);
-        correct += pred.eq(target).sum().item<int>();
-        bna++;
-    }
+    //     auto output = net->forward(mesh_tensor);
+    //     test_loss += torch::nll_loss(output, target, {}, torch::Reduction::Sum).item<float>();
+    //     auto pred = output.argmax(1);
+    //     correct += pred.eq(target).sum().item<int>();
+    //     bna++;
+    // }
 
-    test_loss /= *train_dataset->size();
-    float acc = 100. * correct / *train_dataset->size();
+    // test_loss /= *train_dataset->size();
+    // float acc = 100. * correct / *train_dataset->size();
 
-    return std::make_pair(test_loss, acc);
+    return std::make_pair(0.1, 0.1);
 }
 
 
 int main(){
     
-    std::string dataroot = "data";
+    std::string dataroot = "data/MNISTDGGS";
     std::string mode = "train";
 
-    int batch_size = 32;
-    int num_workers = 0;
+    int batch_size = 1;
+    int num_workers = 20;
     bool shuffle = true;
-    bool augment = true;
+    bool in_memory = true;
     int epochs = 10;
 
-    ClassificationDataset train_dataset = ClassificationDataset(
+    // ClassificationDataset train_dataset = ClassificationDataset(
+    //     dataroot,
+    //     batch_size,
+    //     true,
+    //     true,
+    //     true,
+    //     true
+    // );
+
+    auto train_dataset = ClassificationDGGSDataset(
         dataroot,
         batch_size,
         true,
-        true,
-        true,
-        true
-    );
+        shuffle,
+        in_memory,
+        givde::Resolution(5)
+    ).map(Stack<DGGSExample>());
 
-    MeshNet net = MeshNet();
+    MeshNet net{
+        3,
+        10,
+        4,
+        std::vector<int>{32, 64, 128, 128, 128}
+    };
 
     
     float best_acc = 0.0;
-    float best_loss = 100000.0;
+    float best_loss = 0;
 
     float loss = 0.0;
     float acc = 0.0;
@@ -104,10 +131,10 @@ int main(){
     if (mode == "train"){
         for (int epoch = 1; epoch <= epochs; ++epoch){
             std::pair<float, float> res = train(net,
-                                                &train_dataset,
                                                 epoch, 
                                                 num_workers, 
-                                                torch::Device(torch::kCUDA));
+                                                torch::Device(torch::kCUDA),
+                                                batch_size);
             loss = res.first;
             acc = res.second;
             if (acc > best_acc){
