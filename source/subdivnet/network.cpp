@@ -102,6 +102,7 @@ MeshNetImpl::MeshNetImpl(
     int n_dropout) {
     this->fc = MeshLinear(in_channels, layer_channels[0]);
     this->relu = MeshReLU();
+    this->convs = torch::nn::Sequential();
 
     for (int i=0; i < depth; i++){
         if (residual) {
@@ -114,10 +115,10 @@ MeshNetImpl::MeshNetImpl(
                                             layer_channels[i + 1]));
         }
         this->convs->push_back(MeshPool("max"));
-        this->convs->push_back(MeshConv(layer_channels[-1], 
+    }
+    this->convs->push_back(MeshConv(layer_channels[-1], 
                                    layer_channels[-1], 
                                    false));
-    }
     this->global_pool = MeshAdaptivePool("max");
 
     if (n_dropout >= 2){
@@ -137,18 +138,18 @@ MeshNetImpl::MeshNetImpl(
 
 
 torch::Tensor MeshNetImpl::forward(MeshTensor mesh){
-    mesh = this->fc.forward(mesh);
-    mesh = this->relu.forward(mesh);
+    mesh = this->fc.forward(mesh); // returns mesh tensor
+    mesh = this->relu.forward(mesh); // returns mesh tensor
 
-    torch::Tensor mmesh = this->convs->forward(mesh);
+    mesh = this->convs->forward<MeshTensor>(mesh); // returns mesh tensor
 
-    torch::Tensor x = this->global_pool.forward(mesh);
+    torch::Tensor x = this->global_pool.forward(mesh); // returns torch tensor from here on out
 
     // check if dp1 has been initialized
     if (this->dp1){
         x = this->dp1(x);
     }
-        x = this->dp1(x);
+        // x = this->dp1(x);
     x = this->torch_relu(this->bn(this->linear1(x)));
     if (this->dp2){
         x = this->dp2(x);

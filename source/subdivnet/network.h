@@ -1,3 +1,4 @@
+#pragma once
 #include <torch/torch.h>
 #include <torch/script.h>
 
@@ -94,7 +95,7 @@ class MeshResConvBlock : public torch::nn::Module {
 
 // };
 
-class MeshNetImpl : public torch::nn::Module {
+class TORCH_API MeshNetImpl : public torch::nn::Module {
     using torch::nn::Module::Module;
     private:
         MeshLinear fc;
@@ -116,7 +117,7 @@ class MeshNetImpl : public torch::nn::Module {
     public: 
 
 
-        MeshNetImpl(
+        explicit MeshNetImpl(
             int in_channels, 
             int out_channels, 
             int depth,
