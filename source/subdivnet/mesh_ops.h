@@ -4,7 +4,12 @@
 #include <torch/torch.h>
 #include <vector>
 
-// #include <iostream>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/iota.hpp>
+#include <range/v3/view/take.hpp>
+#include <range/v3/view/transform.hpp>
+#include <range/v3/view/zip.hpp>
+
 #include <cassert>
 
 #include "mesh_tensor.h"
@@ -53,18 +58,18 @@ class MeshPool : public torch::nn::Module {
 };
 
 
-class MeshUnpool : public torch::nn::Module {
-    using torch::nn::Module::Module;
+// class MeshUnpool : public torch::nn::Module {
+//     using torch::nn::Module::Module;
 
-    public:
-        int k_mode;
+//     public:
+//         int k_mode;
 
-        MeshUnpool(int mode){
-            this->k_mode = mode;
-        }
+//         MeshUnpool(int mode){
+//             this->k_mode = mode;
+//         }
 
-        MeshTensor forward(MeshTensor meshTensor);
-};
+//         MeshTensor forward(MeshTensor meshTensor, MeshTensor refMesh);
+// };
 
 
 class MeshAdaptivePool : public torch::nn::Module {
@@ -74,7 +79,12 @@ class MeshAdaptivePool : public torch::nn::Module {
         std::string k_mode;
 
         MeshAdaptivePool(std::string mode){
-            this->k_mode = mode;
+            if (mode != "max" && mode != "mean"){
+                // raise error
+                throw std::invalid_argument("mode must be either 'max' or 'mean'");
+            } else {
+                this->k_mode = mode;
+            }
         }
 
         torch::Tensor forward(MeshTensor meshTensor);
