@@ -18,6 +18,7 @@ function (subdivnet_declare_lib)
         "${BASE_DIR}/source/subdivnet/network.cpp"
         "${BASE_DIR}/source/subdivnet/network.h"
         "${BASE_DIR}/source/subdivnet/utils.h"
+        # "${BASE_DIR}/source/subdivnet/convert.h"
         # "${BASE_DIR}/source/maps/geometry.cpp"w
         "${BASE_DIR}/source/maps/geometry.h"
         "${BASE_DIR}/source/maps/maps.cpp"
@@ -42,7 +43,7 @@ function (subdivnet_declare_exe BASE_DIR)
     subdivnet_dependency_targets()
 
     add_executable(subdivnet_exe
-        "${BASE_DIR}source/main.cpp"
+        "${BASE_DIR}source/preprocess.cpp"
     )
     add_executable(subdivnet::exe ALIAS subdivnet_exe)
     set_property(TARGET subdivnet_exe PROPERTY OUTPUT_NAME subdivnet)

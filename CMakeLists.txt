@@ -34,21 +34,36 @@ subdivnet_declare_lib()
 
 
 # find cgal and its components
+find_package(givdeapp REQUIRED)
+find_package(givdelib REQUIRED)
+find_package(givdetypes REQUIRED)
+find_package(givdefp REQUIRED)
+# find_package(givderender REQUIRED)
+# find_package(givdegeometry REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
 find_package(nlohmann_json REQUIRED)
 find_package(nlohmann_json_schema_validator REQUIRED)
 find_package(Torch REQUIRED)
 find_package(libigl REQUIRED)
-
+find_package(libpqxx REQUIRED)
+find_package(cereal REQUIRED)
 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 
+list(APPEND dependencies givdeapp::givdeapp)
+list(APPEND dependencies givdelib::givdelib)
+list(APPEND dependencies givdetypes::givdetypes)
+list(APPEND dependencies givdefp::givdefp)
+# list(APPEND dependencies givderender::givderender)
+# list(APPEND dependencies givdegeometry::givdegeometry)
 list(APPEND dependencies CGAL::CGAL)
 list(APPEND dependencies nlohmann_json::nlohmann_json)
 list(APPEND dependencies nlohmann_json_schema_validator)
 # use libigl
 list(APPEND dependencies libigl::libigl)
+list(APPEND dependencies libpqxx::pqxx)
+list(APPEND dependencies cereal::cereal)
 list(APPEND dependencies "${TORCH_LIBRARIES}")
 
 
@@ -67,7 +82,7 @@ target_link_libraries(subdivnet_lib PRIVATE ${dependencies})
 
 # ---- Declare executable ----
 
-add_executable(subdivnet_exe source/main.cpp)
+add_executable(subdivnet_exe source/preprocess.cpp)
 add_executable(train_subdivnet_exe source/train_cls.cpp)
 add_executable(subdivnet::exe ALIAS subdivnet_exe)
 set_property(TARGET subdivnet_exe PROPERTY OUTPUT_NAME subdivnet)
